@@ -32,28 +32,28 @@ export function DashboardView() {
     const state = store.getState();
     const currentUser = store.getUser();
     const allTasks = state.tasks || [];
-    
+
     const stats = calculateDashboardStats(allTasks);
     content.appendChild(StatsGrid(stats));
 
     // Filter buttons
     const filterContainer = document.createElement('div');
     filterContainer.style.cssText = 'margin: 24px 0; display: flex; gap: 12px; flex-wrap: wrap;';
-    
+
     const filters = [
         { label: 'All Tasks', value: 'all' },
         { label: 'Pending', value: 'pending' },
         { label: 'In Progress', value: 'in_progress' },
         { label: 'Completed', value: 'completed' }
     ];
-    
+
     // Add 'Annulled' filter only for admin
     if (currentUser && currentUser.role === 'admin') {
         filters.push({ label: 'Annulled', value: 'annulled' });
     }
-    
+
     let currentFilter = 'all';
-    
+
     filters.forEach(filter => {
         const btn = document.createElement('button');
         btn.textContent = filter.label;
@@ -65,7 +65,7 @@ export function DashboardView() {
             filterContainer.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentFilter = filter.value;
-            
+
             // Filter tasks and re-render table
             const filteredTasks = filterTasks(allTasks, currentFilter);
             const tableContainer = content.querySelector('.task-table-container');
@@ -76,7 +76,7 @@ export function DashboardView() {
         });
         filterContainer.appendChild(btn);
     });
-    
+
     content.appendChild(filterContainer);
 
     // Table - show all tasks with initial filter
@@ -90,67 +90,45 @@ export function DashboardView() {
     const unsubscribe = store.subscribe(() => {
         // Re-render stats and table when state changes
         const state = store.getState();
+        const currentUser = store.getUser();
         const allTasks = state.tasks || [];
-        
-        // Update stats
-        const stats = {
-            total: allTasks.filter(t => t.status !== 'annulled').length,
-            completed: allTasks.filter(t => t.status === 'completed').length,
-            inProgress: allTasks.filter(t => t.status === 'in_progress').length,
-            pending: allTasks.filter(t => t.status === 'pending').length,
-            annulled: allTasks.filter(t => t.status === 'annulled').length
-        };
-        
-        const statsGrid = body.querySelector('.stats-grid');
-        if (statsGrid) {
-            statsGrid.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-icon">📋</div>
-                    <div class="stat-value">${stats.total}</div>
-                    <div class="stat-label">Total Tasks</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-value">${stats.completed}</div>
-                    <div class="stat-label">Completed</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🔄</div>
-                    <div class="stat-value">${stats.inProgress}</div>
-                    <div class="stat-label">In Progress</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">⏱️</div>
-                    <div class="stat-value">${stats.pending}</div>
-                    <div class="stat-label">Pending</div>
-                </div>
-                ${currentUser.role === 'admin' ? `
-                <div class="stat-card">
-                    <div class="stat-icon">🚫</div>
-                    <div class="stat-value">${stats.annulled}</div>
-                    <div class="stat-label">Annulled</div>
-                </div>
-                ` : ''}
-            `;
+
+        // 1. UPDATE STATS: Use StatsGrid component to preserve SVGs (Goodbye Emojis)
+        const stats = calculateDashboardStats(allTasks);
+        const newStatsGrid = StatsGrid(stats);
+
+        // Find the old grid and replace it cleanly
+        // Busamos el grid antiguo y lo reemplazamos limpiamente
+        const oldStatsGrid = body.querySelector('.stats-grid');
+        if (oldStatsGrid) {
+            // Simple optimization: only replace if data actually changed could be better,
+            // but effectively this is fine. The flicker comes mainly from large layout shifts.
+            // StatsGrid usually fixed height/width helps.
+            oldStatsGrid.replaceWith(newStatsGrid);
         }
-        
-        // Update task table based on current filter
+
+        // 2. UPDATE TABLE: Reuse correct filtering logic
         const activeFilterBtn = body.querySelector('.filter-btn.active');
         const activeFilter = activeFilterBtn ? activeFilterBtn.dataset.filter : 'all';
-        let filteredTasks = allTasks;
-        
-        if (activeFilter !== 'all') {
-            filteredTasks = allTasks.filter(task => task.status === activeFilter);
-        }
-        
-        const tableBody = body.querySelector('.task-list tbody');
+
+        const filteredTasks = filterTasks(allTasks, activeFilter);
+
+        // Corrected selector: #task-tbody instead of .task-list tbody
+        const tableBody = body.querySelector('#task-tbody');
         if (tableBody) {
-            renderTaskRows(tableBody, filteredTasks);
+            // Use renderTasks (defined) instead of renderTaskRows (undefined)
+            tableBody.innerHTML = renderTasks(filteredTasks, currentUser);
+            // Re-assign events to new DOM elements
+            attachEventListeners(tableBody, currentUser);
         }
+
+        // 3. UPDATE SIDEBAR: Check permissions when user data arrives
+        // Only update if role changed or if it's initial load to avoid flickering
+        // updateAdminMenu(body); // <-- This could be causing unnecessary redraw if not handled carefully
     });
 
     // Show admin menu if user is admin
-    updateAdminMenu();
+    updateAdminMenu(body);
 
     return body;
 }
@@ -200,7 +178,7 @@ function createTaskTable(tasks, currentUser) {
     searchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
         const tbody = container.querySelector('#task-tbody');
-        const filteredTasks = tasks.filter(task => 
+        const filteredTasks = tasks.filter(task =>
             task.title.toLowerCase().includes(searchTerm) ||
             (task.description && task.description.toLowerCase().includes(searchTerm))
         );
@@ -228,24 +206,26 @@ function renderTasks(tasks, currentUser) {
 
     return tasks.map(task => {
         const isAdmin = currentUser && currentUser.role === 'admin';
-        const statusCell = isAdmin ? 
+        const safeStatus = task.status || 'pending';
+        const statusCell = isAdmin ?
             `<select class="status-select" data-task-id="${task.id}">
-                <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pending</option>
-                <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
-                <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option>
-                <option value="blocked" ${task.status === 'blocked' ? 'selected' : ''}>Blocked</option>
-                <option value="annulled" ${task.status === 'annulled' ? 'selected' : ''}>Annulled</option>
+                <option value="pending" ${safeStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                <option value="in_progress" ${safeStatus === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                <option value="completed" ${safeStatus === 'completed' ? 'selected' : ''}>Completed</option>
+                <option value="blocked" ${safeStatus === 'blocked' ? 'selected' : ''}>Blocked</option>
+                <option value="annulled" ${safeStatus === 'annulled' ? 'selected' : ''}>Annulled</option>
             </select>` :
-            `<span class="status-badge status-${task.status}">${capitalizeFirst(task.status.replace('_', ' '))}</span>`;
-        
+            `<span class="status-badge status-${safeStatus}">${capitalizeFirst(safeStatus.replace('_', ' '))}</span>`;
+
         return `
         <tr data-task-id="${task.id}">
             <td>
                 <div class="task-title">${task.title}</div>
                 <div class="task-meta">${task.description || 'No description'}</div>
+                ${task.category ? `<div style="margin-top:4px"><span class="category-badge" style="font-size:10px">${task.category}</span></div>` : ''}
             </td>
             <td>
-                <span class="user-badge">${task.userId || 'Unassigned'}</span>
+                <span class="user-badge">${task.user ? task.user.name : (task.userId ? 'ID: ' + task.userId : 'Unassigned')}</span>
             </td>
             <td>
                 <div class="priority">
@@ -279,7 +259,7 @@ function renderTasks(tasks, currentUser) {
 
 function attachEventListeners(tbody, currentUser) {
     const isAdmin = currentUser && currentUser.role === 'admin';
-    
+
     // Status change listeners (admin only)
     if (isAdmin) {
         const statusSelects = tbody.querySelectorAll('.status-select');
@@ -319,7 +299,7 @@ function calculateDashboardStats(tasks) {
     const completedTasks = activeTasks.filter(t => t.status === 'completed').length;
     const inProgressTasks = activeTasks.filter(t => t.status === 'in_progress').length;
     const pendingTasks = activeTasks.filter(t => t.status === 'pending').length;
-    
+
     return [
         {
             label: 'Total Tasks',
@@ -410,12 +390,20 @@ function handleViewTask(taskId) {
     }, 500);
 }
 
-function updateAdminMenu() {
+function updateAdminMenu(context = document) {
     const user = store.getUser();
-    if (user && user.role === 'admin') {
-        const adminNav = document.querySelector('#admin-annulled-nav');
-        if (adminNav) {
-            adminNav.style.display = 'block';
-        }
-    }
+
+    // Search within context (body) if provided, useful during initial rendering
+    const safeQuery = (selector) =>
+        (context.querySelector ? context.querySelector(selector) : document.querySelector(selector));
+
+    const usersNav = safeQuery('#admin-users-nav');
+    const annulledNav = safeQuery('#admin-annulled-nav');
+
+    // Desired state
+    const displayStyle = (user && user.role === 'admin') ? 'block' : 'none';
+
+    // Apply to both menu elements
+    if (usersNav) usersNav.style.display = displayStyle;
+    if (annulledNav) annulledNav.style.display = displayStyle;
 }

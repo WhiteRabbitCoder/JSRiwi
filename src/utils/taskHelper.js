@@ -2,13 +2,24 @@ export const TASK_STATUS = {
     PENDING: 'pending',
     IN_PROGRESS: 'in_progress',
     COMPLETED: 'completed',
-    BLOCKED: 'blocked'
+    BLOCKED: 'blocked',
+    ANNULLED: 'annulled'
 };
 
 export const TASK_PRIORITY = {
     LOW: 'low',
     MEDIUM: 'medium',
     HIGH: 'high'
+};
+
+export const TASK_CATEGORIES = {
+    DESIGN: 'Design',
+    MATH: 'Mathematics',
+    ENGINEERING: 'Engineering',
+    OPTIMIZATION: 'Optimization',
+    MARKETING: 'Marketing',
+    DEVELOPMENT: 'Development',
+    OTHER: 'Other'
 };
 
 /**
@@ -59,6 +70,6 @@ export function prepareGeneralUpdate(updates) {
     if (Object.keys(cleanUpdates).length === 0) {
         throw new Error("No valid fields to update");
     }
-    
+
     return cleanUpdates;
 }

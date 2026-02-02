@@ -10,7 +10,7 @@ export function LoginView() {
     const logoContainer = document.createElement('div');
     logoContainer.classList.add('logo-container');
     logoContainer.innerHTML = `
-        <div class="logo">C</div>
+        <img src="/logo.svg" alt="Logo" class="logo-image" style="height: 60px; width: auto; margin-bottom: 8px;">
         <div class="logo-text">CRUDZASO</div>
     `;
 

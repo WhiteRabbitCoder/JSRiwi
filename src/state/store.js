@@ -1,18 +1,18 @@
 ﻿import taskService from '../services/taskService.js';
 import userService from '../services/userService.js';
-import { logout as authLogout } from '../services/authService.js'; // <--- IMPORTANTE: Importar logout
-import { 
-    validateTask, 
-    prepareStatusUpdate, 
+import { logout as authLogout } from '../services/authService.js'; // IMPORTANT: Import logout
+import {
+    validateTask,
+    prepareStatusUpdate,
     preparePriorityUpdate,
-    prepareGeneralUpdate 
+    prepareGeneralUpdate
 } from '../utils/taskHelper.js';
 
 class Store {
     constructor() {
         this.state = {
-            tasks: [],     
-            user: null,    
+            tasks: [],
+            user: null,
             loading: false,
             error: null
         };
@@ -20,13 +20,21 @@ class Store {
     }
 
     getState() { return { ...this.state }; }
-    
+
     subscribe(callback) {
         this.subscribers.push(callback);
         return () => this.subscribers = this.subscribers.filter(sub => sub !== callback);
     }
 
-    notify() { this.subscribers.forEach(cb => cb(this.state)); }
+    notify() {
+        this.subscribers.forEach(cb => {
+            try {
+                cb(this.state);
+            } catch (error) {
+                console.warn("⚠️ Error in view update (probably waiting for data):", error);
+            }
+        });
+    }
 
     setState(newState) {
         this.state = { ...this.state, ...newState };
@@ -38,7 +46,7 @@ class Store {
     // ============================================
 
     /**
-     * Carga tareas dependiendo del rol del usuario
+     * Load tasks based on user role
      */
     async loadTasks() {
         this.setState({ loading: true, error: null });
@@ -46,12 +54,26 @@ class Store {
             const user = this.state.user;
             if (!user) return;
 
-            // SIEMPRE cargar todas las tareas del sistema
+            // ALWAYS load all tasks from the system
             let tasks = await taskService.getAllTasks();
-            
-            // NO filtramos por usuario aquí - lo haremos en las vistas según sea necesario
-            // Esto permite que el dashboard muestre todas las tareas
-            
+
+            // MANUAL JOIN: Fetch users to populate user details (replacing _expand=user)
+            try {
+                const users = await userService.getUsers();
+                const userMap = users.reduce((acc, u) => { acc[u.id] = u; return acc; }, {});
+
+                tasks = tasks.map(task => ({
+                    ...task,
+                    user: task.userId ? userMap[task.userId] : undefined
+                }));
+            } catch (uError) {
+                console.warn("Could not populate user details for tasks:", uError);
+                // Continue without expanded user details
+            }
+
+            // DO NOT filter by user here - we'll do it in the views as needed
+            // This allows the dashboard to show all tasks
+
             this.setState({ tasks, loading: false });
         } catch (error) {
             this.setState({ error: error.message, loading: false });
@@ -59,26 +81,26 @@ class Store {
     }
 
     /**
-     * Crear tarea asignándola directamente al crearla
+     * Create task and assign it directly upon creation
      */
     async createTask(taskData, userId = null) {
         this.setState({ loading: true, error: null });
         try {
             validateTask(taskData);
-            
-            // Inyectamos el userId directamente en la tarea
+
+            // Inject userId directly into the task
             const newTask = await taskService.createTask({
                 ...taskData,
-                userId: userId, // <-- Aquí está la magia de la relación FK
+                userId: userId, // <-- Here's the magic of the FK relationship
                 status: 'pending'
             });
 
-            // Actualizamos estado local
-            this.setState({ 
+            // Update local state
+            this.setState({
                 tasks: [...this.state.tasks, newTask],
-                loading: false 
+                loading: false
             });
-            
+
             return newTask;
         } catch (error) {
             this.setState({ error: error.message, loading: false });
@@ -87,12 +109,12 @@ class Store {
     }
 
     /**
-     * Asignar tarea (para admins, mueve la tarea de dueño)
+     * Assign task (for admins, moves task ownership)
      */
     async assignTaskToUser(taskId, userId) {
         this.setState({ loading: true });
         try {
-            // Actualizamos la tarea, NO el usuario
+            // Update the task, NOT the user
             await this._performTaskUpdate(taskId, { userId: userId });
             this.setState({ loading: false });
         } catch (error) {
@@ -117,17 +139,17 @@ class Store {
     }
 
     /**
-     * Método interno privado genérico para actualizar
+     * Generic private internal method for updates
      */
     async _performTaskUpdate(taskId, validPayload) {
         try {
             const updatedTask = await taskService.updateTask(taskId, validPayload);
-            
-            // Actualizar array local
-            const updatedTasks = this.state.tasks.map(t => 
+
+            // Update local array
+            const updatedTasks = this.state.tasks.map(t =>
                 t.id === taskId ? updatedTask : t
             );
-            
+
             this.setState({ tasks: updatedTasks });
             return updatedTask;
         } catch (error) {
@@ -141,23 +163,23 @@ class Store {
     // ============================================
     setUser(user) {
         this.setState({ user });
-        if (user) this.loadTasks(); // Cargar tareas al loguear
+        if (user) this.loadTasks(); // Load tasks on login
     }
 
     getUser() { return this.state.user; }
 
     /**
-     * Cierra sesión: Limpia token y resetea el estado global
+     * Logout: Clear token and reset global state
      */
     logout() {
-        authLogout(); // 1. Borrar token del storage
-        
-        // 2. Limpiar estado en memoria
-        this.setState({ 
-            user: null, 
-            tasks: [], 
+        authLogout(); // 1. Delete token from storage
+
+        // 2. Clear state in memory
+        this.setState({
+            user: null,
+            tasks: [],
             error: null,
-            loading: false 
+            loading: false
         });
     }
 }

@@ -8,8 +8,7 @@
       "password": "password123",
       "role": "admin",
       "department": "Administrative",
-      "createdAt": "2026-02-02T02:55:49.591Z",
-      "taskIds": []
+      "createdAt": "2026-02-02T02:55:49.591Z"
     },
     {
       "id": "f052",
@@ -18,6 +17,7 @@
       "password": "password123",
       "role": "client",
       "status": "active",
+      "department": "Administrative",
       "createdAt": "2026-02-02T13:02:42.497Z"
     },
     {
@@ -140,6 +140,29 @@
       "createdAt": "2026-02-02T14:30:10.075Z",
       "updatedAt": "2026-02-02T14:30:10.075Z",
       "id": "LZS9BrC"
+    },
+    {
+      "id": "2252",
+      "title": "Test Task from Script",
+      "userId": "1cbd",
+      "description": "Test description",
+      "category": "Development",
+      "priority": "medium",
+      "dueDate": "2026-02-02T18:47:11.446Z",
+      "status": "completed",
+      "updatedAt": "2026-02-03T03:55:46.503Z"
+    },
+    {
+      "title": "fix fix ",
+      "description": "",
+      "category": "Development",
+      "priority": "low",
+      "dueDate": "2026-02-03T00:00:00.000Z",
+      "userId": "f052",
+      "status": "completed",
+      "createdAt": "2026-02-03T04:00:06.149Z",
+      "updatedAt": "2026-02-03T04:12:28.435Z",
+      "id": "t6Low-y"
     }
   ]
 }

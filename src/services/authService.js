@@ -1,5 +1,5 @@
 ﻿/* src/services/authService.js */
-import {API_URLS} from "../utils/constants.js";
+import { API_URLS } from "../utils/constants.js";
 
 /**
  * Generates a simple session token
@@ -32,7 +32,7 @@ export async function login(email, password) {
             return { success: false, error: 'User not found' };
         }
 
-        // --- NUEVA VALIDACIÓN: Soft Delete Check ---
+        // --- NEW VALIDATION: Soft Delete Check ---
         if (user.status === 'annulled') {
             return { success: false, error: 'Esta cuenta ha sido desactivada. Contacte con administración.' };
         }

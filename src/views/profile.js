@@ -16,88 +16,60 @@ export function ProfileView() {
     const content = document.createElement('main');
     content.classList.add('content');
 
-    const user = store.getUser();
-    if (!user) {
-        content.innerHTML = '<p>Please log in to view your profile.</p>';
-        mainContent.appendChild(content);
-        body.appendChild(mainContent);
-        return body;
-    }
+    // Reactive rendering function
+    const render = () => {
+        content.innerHTML = '';
+        const user = store.getUser();
 
-    // Get user tasks count
-    const state = store.getState();
-    const userTasks = (state.tasks || []).filter(t => t.userId === user.id && t.status !== 'annulled');
-    const taskCount = userTasks.length;
+        // Manejo de estado de carga
+        if (!user) {
+            content.innerHTML = '<div style="padding: 20px; text-align: center;">Loading profile...</div>';
+            return;
+        }
 
-    // Format role badge
-    const roleBadge = user.role === 'admin' ? 'System Admin' : 'User';
-    const roleClass = user.role === 'admin' ? 'pill--blue' : 'pill--green';
+        // Get user tasks count
+        const state = store.getState();
+        const userTasks = (state.tasks || []).filter(t => t.userId === user.id && t.status !== 'annulled');
+        const taskCount = userTasks.length;
 
-    content.innerHTML = `
-        <header class="profile-header">
-            <h1>My Profile</h1>
-        </header>
+        // Format role badge
+        const roleBadge = user.role === 'admin' ? 'System Admin' : 'User';
 
-        <section class="profile-layout">
-            <article class="profile-card">
-                <div class="profile-card__cover"></div>
-                <div class="profile-card__body">
-                    <div class="profile-card__avatar"></div>
-                    <h2>${user.name || 'User'}</h2>
-                    <span class="profile-card__badge">${roleBadge}</span>
-                    <div class="profile-card__email">
-                        <span class="email-icon">✉</span>
-                        ${user.email}
-                    </div>
-                    <div class="profile-card__divider"></div>
-                    <div class="profile-card__stat">
-                        <div class="profile-card__stat-value">${taskCount}</div>
-                        <div class="profile-card__stat-label">Tasks</div>
-                    </div>
-                </div>
-            </article>
+        content.innerHTML = `
+            <header class="profile-header">
+                <h1>My Profile</h1>
+            </header>
 
-            <article class="info-card" id="info-card">
-                <div class="info-card__header">
-                    <h3>Personal Information</h3>
-                    <button class="button-secondary button-secondary--icon" type="button" id="edit-btn">
-                        ✎ Edit Profile
-                    </button>
-                </div>
-                <div class="info-grid" id="info-display">
-                    <div>
-                        <div class="info-label">Full Name</div>
-                        <div class="info-value">${user.name || 'N/A'}</div>
-                    </div>
-                    <div>
-                        <div class="info-label">User ID</div>
-                        <div class="info-value">CZ-${user.id.substring(0, 6).toUpperCase()}</div>
-                    </div>
-                    <div>
-                        <div class="info-label">Phone</div>
-                        <div class="info-value">${user.phone || 'N/A'}</div>
-                    </div>
-                    <div>
-                        <div class="info-label">Department</div>
-                        <div class="info-value">
-                            <span class="pill pill--amber">${user.department || 'N/A'}</span>
+            <section class="profile-layout">
+                <article class="profile-card">
+                    <div class="profile-card__cover"></div>
+                    <div class="profile-card__body">
+                        <div class="profile-card__avatar"></div>
+                        <h2>${user.name || 'User'}</h2>
+                        <span class="profile-card__badge">${roleBadge}</span>
+                        <div class="profile-card__email">
+                            <span class="email-icon">✉</span>
+                            ${user.email}
+                        </div>
+                        <div class="profile-card__divider"></div>
+                        <div class="profile-card__stat">
+                            <div class="profile-card__stat-value">${taskCount}</div>
+                            <div class="profile-card__stat-label">Tasks</div>
                         </div>
                     </div>
-                    <div>
-                        <div class="info-label">Role Level</div>
-                        <div class="info-value">${user.role === 'admin' ? 'System Administrator' : 'Standard User'}</div>
-                    </div>
-                    <div>
-                        <div class="info-label">Join Date</div>
-                        <div class="info-value">${new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-                    </div>
-                </div>
+                </article>
 
-                <form id="info-edit" style="display: none;">
-                    <div class="info-grid">
+                <article class="info-card" id="info-card">
+                    <div class="info-card__header">
+                        <h3>Personal Information</h3>
+                        <button class="button-secondary button-secondary--icon" type="button" id="edit-btn">
+                            ✎ Edit Profile
+                        </button>
+                    </div>
+                    <div class="info-grid" id="info-display">
                         <div>
                             <div class="info-label">Full Name</div>
-                            <input type="text" class="form-input" id="edit-name" value="${user.name || ''}" required>
+                            <div class="info-value">${user.name || 'N/A'}</div>
                         </div>
                         <div>
                             <div class="info-label">User ID</div>
@@ -105,7 +77,7 @@ export function ProfileView() {
                         </div>
                         <div>
                             <div class="info-label">Phone</div>
-                            <input type="tel" class="form-input" id="edit-phone" value="${user.phone || ''}" required>
+                            <div class="info-value">${user.phone || 'N/A'}</div>
                         </div>
                         <div>
                             <div class="info-label">Department</div>
@@ -122,98 +94,149 @@ export function ProfileView() {
                             <div class="info-value">${new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
                         </div>
                     </div>
-                    
-                    <div id="profile-error" style="display: none; color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px; margin-top: 20px;"></div>
-                    <div id="profile-success" style="display: none; color: #10b981; padding: 12px; background: #d1fae5; border-radius: 8px; margin-top: 20px;"></div>
-                    
-                    <div class="edit-actions">
-                        <button type="button" class="btn-cancel" id="cancel-edit-btn">Cancel</button>
-                        <button type="submit" class="btn-primary">
-                            Save Changes
-                        </button>
-                    </div>
-                </form>
-            </article>
-        </section>
-    `;
 
-    // Handle edit mode toggle
-    setTimeout(() => {
-        const editBtn = content.querySelector('#edit-btn');
-        const infoDisplay = content.querySelector('#info-display');
-        const infoEdit = content.querySelector('#info-edit');
-        const cancelEditBtn = content.querySelector('#cancel-edit-btn');
-        const form = content.querySelector('#info-edit');
-        const errorMsg = content.querySelector('#profile-error');
-        const successMsg = content.querySelector('#profile-success');
+                    <form id="info-edit" style="display: none;">
+                        <div class="info-grid">
+                            <div>
+                                <div class="info-label">Full Name</div>
+                                <input type="text" class="form-input" id="edit-name" value="${user.name || ''}" required>
+                            </div>
+                            <div>
+                                <div class="info-label">User ID</div>
+                                <div class="info-value">CZ-${user.id.substring(0, 6).toUpperCase()}</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Phone</div>
+                                <input type="tel" class="form-input" id="edit-phone" value="${user.phone || ''}" required>
+                            </div>
+                            <div>
+                                <div class="info-label">Department</div>
+                                <div class="info-value">
+                                    <span class="pill pill--amber">${user.department || 'N/A'}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="info-label">Role Level</div>
+                                <div class="info-value">${user.role === 'admin' ? 'System Administrator' : 'Standard User'}</div>
+                            </div>
+                            <div>
+                                <div class="info-label">Join Date</div>
+                                <div class="info-value">${new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                            </div>
+                        </div>
+                        
+                        <div id="profile-error" style="display: none; color: #ef4444; padding: 12px; background: #fee2e2; border-radius: 8px; margin-top: 20px;"></div>
+                        <div id="profile-success" style="display: none; color: #10b981; padding: 12px; background: #d1fae5; border-radius: 8px; margin-top: 20px;"></div>
+                        
+                        <div class="edit-actions">
+                            <button type="button" class="btn-cancel" id="cancel-edit-btn">Cancel</button>
+                            <button type="submit" class="btn-primary">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </article>
+            </section>
+        `;
 
-        editBtn.addEventListener('click', () => {
-            infoDisplay.style.display = 'none';
-            infoEdit.style.display = 'block';
-            editBtn.style.display = 'none';
-        });
+        // Reattach listeners since HTML was replaced
+        setupProfileListeners(content, user);
 
-        cancelEditBtn.addEventListener('click', () => {
-            infoDisplay.style.display = 'grid';
-            infoEdit.style.display = 'none';
-            editBtn.style.display = 'inline-flex';
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
-        });
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
-
-            const name = form.querySelector('#edit-name').value;
-            const phone = form.querySelector('#edit-phone').value;
-
-            try {
-                const response = await fetch(`http://localhost:3000/users/${user.id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ name, phone })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to update profile');
-                }
-
-                const updatedUser = await response.json();
-                store.setUser(updatedUser);
-
-                successMsg.textContent = 'Profile updated successfully!';
-                successMsg.style.display = 'block';
-
-                // Reload the view after a short delay
-                setTimeout(() => {
-                    window.location.hash = '#/profile';
-                }, 1500);
-            } catch (error) {
-                errorMsg.textContent = error.message || 'Failed to update profile';
-                errorMsg.style.display = 'block';
-            }
-        });
-    }, 0);
+        // Update sidebar visibility
+        updateAdminMenu(body);
+    };
 
     mainContent.appendChild(content);
     body.appendChild(mainContent);
 
-    // Show admin menu if user is admin
-    updateAdminMenu();
+    // Initial render
+    render();
+
+    // Subscribe
+    const unsubscribe = store.subscribe(render);
+
+    // Cleanup
+    const originalRemove = body.remove.bind(body);
+    body.remove = () => {
+        unsubscribe();
+        originalRemove();
+    };
 
     return body;
 }
 
-function updateAdminMenu() {
+function setupProfileListeners(content, user) {
+    const editBtn = content.querySelector('#edit-btn');
+    if (!editBtn) return;
+
+    /* Lines 142-200 moved here and adapted */
+    const infoDisplay = content.querySelector('#info-display');
+    const infoEdit = content.querySelector('#info-edit');
+    const cancelEditBtn = content.querySelector('#cancel-edit-btn');
+    const form = content.querySelector('#info-edit');
+    const errorMsg = content.querySelector('#profile-error');
+    const successMsg = content.querySelector('#profile-success');
+
+    editBtn.addEventListener('click', () => {
+        infoDisplay.style.display = 'none';
+        infoEdit.style.display = 'block';
+        editBtn.style.display = 'none';
+    });
+
+    cancelEditBtn.addEventListener('click', () => {
+        infoDisplay.style.display = 'grid';
+        infoEdit.style.display = 'none';
+        editBtn.style.display = 'inline-flex';
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'none';
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'none';
+
+        const name = form.querySelector('#edit-name').value;
+        const phone = form.querySelector('#edit-phone').value;
+
+        try {
+            const response = await fetch(`http://localhost:3000/users/${user.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, phone })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update profile');
+            }
+
+            const updatedUser = await response.json();
+            // This will trigger store update -> render()
+            store.setUser(updatedUser);
+
+            // No need to manually update UI or show success message as re-render happens
+            // But if you want to keep success message visible, it might be tricky with full re-render
+            // Simpler: Just rely on re-render showing updated values
+            alert('Profile updated successfully!');
+        } catch (error) {
+            errorMsg.textContent = error.message || 'Failed to update profile';
+            errorMsg.style.display = 'block';
+        }
+    });
+}
+
+function updateAdminMenu(context = document) {
     const user = store.getUser();
     if (user && user.role === 'admin') {
-        const adminNav = document.querySelector('#admin-annulled-nav');
-        if (adminNav) {
-            adminNav.style.display = 'block';
-        }
+        const safeQuery = (selector) =>
+            (context.querySelector ? context.querySelector(selector) : document.querySelector(selector));
+
+        const usersNav = safeQuery('#admin-users-nav');
+        const annulledNav = safeQuery('#admin-annulled-nav');
+
+        if (usersNav) usersNav.style.display = 'block';
+        if (annulledNav) annulledNav.style.display = 'block';
     }
 }

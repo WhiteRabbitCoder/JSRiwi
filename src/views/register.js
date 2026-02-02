@@ -8,7 +8,7 @@ export function RegisterView() {
     const logoContainer = document.createElement('div');
     logoContainer.classList.add('logo-container');
     logoContainer.innerHTML = `
-        <div class="logo">C</div>
+        <img src="/logo.svg" alt="Logo" class="logo-image" style="height: 60px; width: auto; margin-bottom: 8px;">
         <div class="logo-text">CRUDZASO</div>
     `;
 
@@ -187,15 +187,15 @@ function registerRequest(main) {
             }
 
             // Create user object matching the backend schema
-            const userData = { 
-                name: fullname, 
-                email, 
-                phone, 
-                department, 
+            const userData = {
+                name: fullname,
+                email,
+                phone,
+                department,
                 password
                 // role will be set automatically to "client" (which represents "user") by the backend
             };
-            
+
             const response = await authService.register(userData);
 
             if (!response.success) {

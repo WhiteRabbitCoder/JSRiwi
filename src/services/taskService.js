@@ -1,10 +1,11 @@
 import { API_URLS } from "../utils/constants.js";
 
 class TaskService {
-    
+
     // Obtener TODAS (Para Admin)
     async getAllTasks() {
         try {
+            // Include user details directly using json-server expand capability
             const response = await fetch(`${API_URLS.base}/tasks`);
             if (!response.ok) throw new Error(response.statusText);
             return await response.json();
@@ -17,7 +18,7 @@ class TaskService {
 
     async getTasksByUserId(userId) {
         try {
-            // JSON-Server filtra automáticamente con ?userId=...
+            // JSON-Server automatically filters with ?userId=...
             const response = await fetch(`${API_URLS.base}/tasks?userId=${userId}`);
             if (!response.ok) throw new Error(response.statusText);
             return await response.json();
@@ -63,7 +64,7 @@ class TaskService {
             const response = await fetch(`${API_URLS.base}/tasks/${id}`, {
                 method: "PATCH", // Soft delete
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     status: 'annulled',
                     updatedAt: new Date().toISOString()
                 })

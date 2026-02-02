@@ -65,31 +65,47 @@ export function AdminUsersView() {
         </div>
     `;
 
-    // Load users
+    // Load users (Initial)
+    // Load users (Initial)
     loadUsers(content);
 
-    // Add create user button handler
-    setTimeout(() => {
-        const createBtn = content.querySelector('#create-user-btn');
-        if (createBtn) {
-            createBtn.addEventListener('click', () => {
-                showCreateUserModal();
-            });
-        }
+    // Attach button listeners
+    attachGlobalListeners(content);
 
-        // Search functionality
-        const searchInput = content.querySelector('#user-search');
-        if (searchInput) {
-            searchInput.addEventListener('input', () => {
-                loadUsers(content);
-            });
-        }
-    }, 0);
+    // Subscribe to store for sidebar updates and potential future user state integrations
+    const unsubscribe = store.subscribe(() => {
+        updateAdminMenu(body);
+        // Could also reload users if we integrated user list into store
+    });
+
+    // Cleanup
+    const originalRemove = body.remove.bind(body);
+    body.remove = () => {
+        unsubscribe();
+        originalRemove();
+    };
 
     mainContent.appendChild(content);
     body.appendChild(mainContent);
 
+    // Initial check
+    updateAdminMenu(body);
+
     return body;
+}
+
+function updateAdminMenu(context = document) {
+    const user = store.getUser();
+    if (user && user.role === 'admin') {
+        const safeQuery = (selector) =>
+            (context.querySelector ? context.querySelector(selector) : document.querySelector(selector));
+
+        const usersNav = safeQuery('#admin-users-nav');
+        const annulledNav = safeQuery('#admin-annulled-nav');
+
+        if (usersNav) usersNav.style.display = 'block';
+        if (annulledNav) annulledNav.style.display = 'block';
+    }
 }
 
 async function loadUsers(content) {
@@ -101,7 +117,7 @@ async function loadUsers(content) {
         const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
 
         // Filter users
-        const filteredUsers = users.filter(user => 
+        const filteredUsers = users.filter(user =>
             user.name.toLowerCase().includes(searchTerm) ||
             user.email.toLowerCase().includes(searchTerm)
         );
@@ -186,6 +202,16 @@ async function loadUsers(content) {
     }
 }
 
+// Helper to attach listeners after initial render
+function attachGlobalListeners(content) {
+    const createBtn = content.querySelector('#create-user-btn');
+    if (createBtn) {
+        createBtn.addEventListener('click', () => {
+            showCreateUserModal();
+        });
+    }
+}
+
 function showCreateUserModal() {
     // Check if modal already exists
     const existingModal = document.querySelector('.modal-overlay');
@@ -258,7 +284,7 @@ function showCreateUserModal() {
     // Close modal handlers
     const closeBtn = modal.querySelector('#close-modal');
     const cancelBtn = modal.querySelector('#cancel-btn');
-    
+
     const closeModal = () => {
         modal.remove();
     };

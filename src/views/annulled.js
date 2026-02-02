@@ -21,14 +21,28 @@ export function AnnulledTasksView() {
 
     content.appendChild(PageHeader('Annulled Tasks', 'View all cancelled and deleted tasks', false));
 
-    // Load annulled tasks
-    loadAnnulledTasks(content);
+    const render = () => {
+        content.innerHTML = ''; // Clear previous content
+        content.appendChild(PageHeader('Annulled Tasks', 'View all cancelled and deleted tasks', false));
+        loadAnnulledTasks(content);
+        updateAdminMenu(body);
+    };
+
+    // Initial render
+    render();
+
+    // Subscribe
+    const unsubscribe = store.subscribe(render);
+
+    // Cleanup
+    const originalRemove = body.remove.bind(body);
+    body.remove = () => {
+        unsubscribe();
+        originalRemove();
+    };
 
     mainContent.appendChild(content);
     body.appendChild(mainContent);
-
-    // Show admin menu
-    updateAdminMenu();
 
     return body;
 }
@@ -38,7 +52,7 @@ async function loadAnnulledTasks(content) {
         // Get all tasks from store
         const state = store.getState();
         const allTasks = state.tasks || [];
-        
+
         // Filter only annulled tasks
         const annulledTasks = allTasks.filter(t => t.status === 'annulled');
 
@@ -65,12 +79,17 @@ async function loadAnnulledTasks(content) {
     }
 }
 
-function updateAdminMenu() {
+function updateAdminMenu(context = document) {
     const user = store.getUser();
     if (user && user.role === 'admin') {
-        const adminNav = document.querySelector('#admin-annulled-nav');
-        if (adminNav) {
-            adminNav.style.display = 'block';
-        }
+        const safeQuery = (selector) =>
+            (context.querySelector ? context.querySelector(selector) : document.querySelector(selector));
+
+        const usersNav = safeQuery('#admin-users-nav');
+        const annulledNav = safeQuery('#admin-annulled-nav');
+
+        // Estado deseado
+        if (usersNav) usersNav.style.display = 'block';
+        if (annulledNav) annulledNav.style.display = 'block';
     }
 }

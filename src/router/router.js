@@ -2,7 +2,7 @@
 import { isAuthenticated } from '../services/authService.js';
 import { store } from '../state/store.js';
 
-// Mapa para almacenar la configuración de las rutas
+// Map to store route configuration
 const routes = new Map();
 
 /**
@@ -48,6 +48,31 @@ async function renderRoute() {
     const { view, options } = route;
     const currentUser = store.getUser();
 
+    // --- NEW: Solution to "Phantom User" and Crash on Reload ---
+    // If the route requires auth, we have a token, BUT the user is not yet in memory...
+    // This means initApp is still fetching data ("Hydration gap").
+    // DO NOT render the view to avoid crashing when accessing 'role' of null.
+    if (options.requiresAuth && isAuthenticated() && !currentUser) {
+        console.log('⏳ Token detectado, esperando datos de usuario...');
+        app.innerHTML = '<div class="loading-state" style="text-align:center; padding: 50px;"><h2>Cargando sesión...</h2><p>Por favor espere mientras recuperamos sus datos.</p></div>';
+
+        // Nos suscribimos temporalmente al store.
+        // As soon as initApp does 'store.setUser(user)', this will fire and we'll retry rendering.
+        const unsubscribe = store.subscribe((state) => {
+            if (state.user) {
+                // Data received! Cancel subscription and render for real.
+                unsubscribe();
+                renderRoute();
+            } else if (!isAuthenticated()) {
+                // If token expired or load failed (initApp did logout), go to login.
+                unsubscribe();
+                navigate('#/login');
+            }
+        });
+        return; // IMPORTANT: Stop execution here.
+    }
+    // -------------------------------------------------------------
+
     // 2. Guard: Rutas protegidas (Requieren Login)
     if (options.requiresAuth && !isAuthenticated()) {
         console.warn('Acceso denegado: Usuario no autenticado.');
@@ -55,22 +80,16 @@ async function renderRoute() {
         return;
     }
 
-    // 3. Guard: Rutas solo públicas (Login/Registro no accesibles si ya estás logueado)
+    // 3. Guard: Public-only routes (Login/Register not accessible if already logged in)
     if (options.publicOnly && isAuthenticated()) {
         console.log('Redirigiendo: Usuario ya autenticado.');
         navigate('#/');
         return;
     }
 
-    // 4. Guard: Roles específicos (Protección Admin/Users)
+    // 4. Guard: Specific roles (Admin/User protection)
     if (options.allowedRoles && options.allowedRoles.length > 0) {
-        // Asegurar que tenemos datos del usuario antes de verificar roles
-        if (!currentUser || !currentUser.role) {
-            // Si está autenticado pero el store no tiene info, forzamos login para recargar
-            navigate('#/login');
-            return;
-        }
-
+        // A este punto, currentUser YA EXISTE gracias a la espera de arriba.
         if (!options.allowedRoles.includes(currentUser.role)) {
             console.warn(`Acceso prohibido. Rol requerido: ${options.allowedRoles}, Rol actual: ${currentUser.role}`);
             app.innerHTML = `
@@ -87,10 +106,10 @@ async function renderRoute() {
     // --- Renderizado de la Vista ---
     try {
         const result = await view();
-        
+
         // Clear the app container
         app.innerHTML = '';
-        
+
         // If result is a DOM element, append it; otherwise set as innerHTML
         if (result instanceof HTMLElement) {
             app.appendChild(result);

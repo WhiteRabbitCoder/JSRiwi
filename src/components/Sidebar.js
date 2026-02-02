@@ -4,7 +4,7 @@ export function Sidebar() {
 
     aside.innerHTML = `
         <div class="logo-container">
-            <div class="logo">C</div>
+            <img src="/logo.svg" alt="Logo" class="logo-image" style="height: 40px; width: auto;">
             <div class="logo-text">CRUDZASO</div>
         </div>
 
