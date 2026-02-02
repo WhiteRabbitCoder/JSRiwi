@@ -77,8 +77,8 @@ export async function register(userData) {
             },
             body: JSON.stringify({
                 ...userData,
-                role: "client",
-                status: "active", // <--- NUEVO: Definimos el estado inicial explícitamente
+                role: "user",
+                status: "active",
                 createdAt: new Date().toISOString(),
             })
         });
@@ -121,6 +121,6 @@ export function isAuthenticated() {
  * Logs out the current user.
  */
 export function logout() {
-    localStorage.removeItem('auth_token');
-    window.location.hash = '#/login'; // Corregido el hash para coincidir con tu Router
+    localStorage.removeItem('authToken');
+    window.location.hash = '#/login';
 }

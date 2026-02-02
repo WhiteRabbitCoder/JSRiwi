@@ -46,20 +46,13 @@ class Store {
             const user = this.state.user;
             if (!user) return;
 
-            let tasks;
-            // SI ES ADMIN: Ve todo
-            if (user.role === 'admin') {
-                tasks = await taskService.getAllTasks();
-            } 
-            // SI ES CLIENTE: Ve solo las suyas (filtro por userId en backend)
-            else {
-                tasks = await taskService.getTasksByUserId(user.id);
-            }
+            // SIEMPRE cargar todas las tareas del sistema
+            let tasks = await taskService.getAllTasks();
             
-            // Filtramos las anuladas visualmente
-            const activeTasks = tasks.filter(t => t.status !== 'annulled');
+            // NO filtramos por usuario aquí - lo haremos en las vistas según sea necesario
+            // Esto permite que el dashboard muestre todas las tareas
             
-            this.setState({ tasks: activeTasks, loading: false });
+            this.setState({ tasks, loading: false });
         } catch (error) {
             this.setState({ error: error.message, loading: false });
         }

@@ -129,6 +129,17 @@
       "status": "annulled",
       "createdAt": "2026-02-02T13:29:26.788Z",
       "updatedAt": "2026-02-02T13:29:26.797Z"
+    },
+    {
+      "title": "Complete UI Implementation",
+      "description": "Finish implementing all views and components",
+      "priority": "high",
+      "dueDate": "2026-02-02T00:00:00.000Z",
+      "userId": "1cbd",
+      "status": "pending",
+      "createdAt": "2026-02-02T14:30:10.075Z",
+      "updatedAt": "2026-02-02T14:30:10.075Z",
+      "id": "LZS9BrC"
     }
   ]
 }

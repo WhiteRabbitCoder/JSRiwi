@@ -8,7 +8,7 @@ const routes = new Map();
 /**
  * Registra una nueva ruta en el enrutador.
  * @param {string} path - El hash de la ruta (ej: "#/admin")
- * @param {Function} viewFunction - Función asíncrona que retorna el string HTML de la vista
+ * @param {Function} viewFunction - Función asíncrona que retorna el elemento DOM o string HTML de la vista
  * @param {object} options - Opciones de seguridad: { requiresAuth, publicOnly, allowedRoles }
  */
 export function addRoute(path, viewFunction, options = {}) {
@@ -86,8 +86,19 @@ async function renderRoute() {
 
     // --- Renderizado de la Vista ---
     try {
-        const html = await view();
-        app.innerHTML = html;
+        const result = await view();
+        
+        // Clear the app container
+        app.innerHTML = '';
+        
+        // If result is a DOM element, append it; otherwise set as innerHTML
+        if (result instanceof HTMLElement) {
+            app.appendChild(result);
+        } else if (typeof result === 'string') {
+            app.innerHTML = result;
+        } else {
+            console.error('View function must return HTMLElement or string');
+        }
     } catch (error) {
         console.error('Error renderizando vista:', error);
         app.innerHTML = '<h1>Error interno al cargar la página.</h1>';
