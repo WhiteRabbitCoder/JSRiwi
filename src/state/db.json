@@ -1,0 +1,134 @@
+{
+  "users": [
+    {
+      "id": "1cbd",
+      "name": "Admin User",
+      "email": "admin@test.com",
+      "phone": "123987564",
+      "password": "password123",
+      "role": "admin",
+      "department": "Administrative",
+      "createdAt": "2026-02-02T02:55:49.591Z",
+      "taskIds": []
+    },
+    {
+      "id": "f052",
+      "name": "Task Master 1770037362494",
+      "email": "worker_1770037362494@firefly.com",
+      "password": "password123",
+      "role": "client",
+      "status": "active",
+      "createdAt": "2026-02-02T13:02:42.497Z"
+    },
+    {
+      "id": "2b0d",
+      "name": "Task Master 1770038048579",
+      "email": "worker_1770038048579@firefly.com",
+      "password": "password123",
+      "role": "client",
+      "status": "active",
+      "createdAt": "2026-02-02T13:14:08.582Z"
+    },
+    {
+      "id": "ec58",
+      "name": "Task Master 1770038070387",
+      "email": "worker_1770038070387@firefly.com",
+      "password": "password123",
+      "role": "client",
+      "status": "active",
+      "createdAt": "2026-02-02T13:14:30.390Z",
+      "taskIds": [
+        "e346"
+      ]
+    },
+    {
+      "id": "4cc3",
+      "name": "Task Master 1770038899492",
+      "email": "worker_1770038899492@firefly.com",
+      "password": "password123",
+      "role": "client",
+      "status": "active",
+      "createdAt": "2026-02-02T13:28:19.496Z",
+      "taskIds": [
+        "115c"
+      ]
+    },
+    {
+      "id": "bf34",
+      "name": "Task Master 1770038959214",
+      "email": "worker_1770038959214@firefly.com",
+      "password": "password123",
+      "phone": "555-0199",
+      "department": "Engineering",
+      "role": "client",
+      "status": "active",
+      "createdAt": "2026-02-02T13:29:19.218Z"
+    },
+    {
+      "id": "44d6",
+      "name": "Task Master 1770038966773",
+      "email": "worker_1770038966773@firefly.com",
+      "password": "password123",
+      "phone": "555-0199",
+      "department": "Engineering",
+      "role": "client",
+      "status": "active",
+      "createdAt": "2026-02-02T13:29:26.777Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "tsk_1",
+      "title": "Inicializar Repositorio",
+      "description": "Configurar git y estructura inicial",
+      "status": "completed",
+      "priority": "high",
+      "category": "DevOps",
+      "dueDate": "2026-02-05T00:00:00.000Z",
+      "createdAt": "2026-02-02T10:00:00.000Z",
+      "updatedAt": "2026-02-02T12:00:00.000Z"
+    },
+    {
+      "id": "e346",
+      "title": "Aprender React Avanzado",
+      "description": "Completar módulo de hooks",
+      "priority": "low",
+      "dueDate": "2026-02-03T13:14:30.402Z",
+      "status": "annulled",
+      "createdAt": "2026-02-02T13:14:30.402Z",
+      "updatedAt": "2026-02-02T13:14:30.431Z"
+    },
+    {
+      "id": "115c",
+      "title": "Aprender React Avanzado",
+      "description": "Completar módulo de hooks",
+      "priority": "low",
+      "dueDate": "2026-02-03T13:28:19.506Z",
+      "status": "annulled",
+      "createdAt": "2026-02-02T13:28:19.506Z",
+      "updatedAt": "2026-02-02T13:28:19.532Z"
+    },
+    {
+      "id": "3b76",
+      "title": "Optimize DB Queries",
+      "description": "Switch from array references to FK",
+      "priority": "high",
+      "dueDate": "2026-02-02T13:29:19.230Z",
+      "userId": "bf34",
+      "status": "annulled",
+      "createdAt": "2026-02-02T13:29:19.230Z",
+      "updatedAt": "2026-02-02T13:29:19.241Z"
+    },
+    {
+      "id": "8e94",
+      "title": "Optimize DB Queries",
+      "description": "Switch from array references to FK",
+      "priority": "high",
+      "dueDate": "2026-02-02T13:29:26.787Z",
+      "userId": "44d6",
+      "status": "annulled",
+      "createdAt": "2026-02-02T13:29:26.788Z",
+      "updatedAt": "2026-02-02T13:29:26.797Z"
+    }
+  ]
+}
